@@ -1,0 +1,15 @@
+services:
+  api:
+    env_file:
+      - path: .env.production
+        required: true
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 8080
+    ports:
+      - "127.0.0.1:${API_PORT:-8080}:8080"
+  cloudflared:
+    env_file:
+      - path: .env.production
+        required: true

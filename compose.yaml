@@ -1,0 +1,74 @@
+name: kurubase
+
+services:
+  postgres:
+    image: postgres:17.9-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      KURUBASE_API_PASSWORD: ${KURUBASE_API_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infra/postgres/migrations/0001_foundation.sql:/docker-entrypoint-initdb.d/001_foundation.sql:ro
+      - ./infra/postgres/init/002_runtime_role.sql:/docker-entrypoint-initdb.d/002_runtime_role.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - private
+    security_opt:
+      - no-new-privileges:true
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - private
+      - edge
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+
+    healthcheck:
+      test: ["CMD", "node", "scripts/healthcheck.mjs"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  cloudflared:
+    image: cloudflare/cloudflared:2026.8.0
+    restart: unless-stopped
+    profiles:
+      - tunnel
+    command: ["tunnel", "--no-autoupdate", "run", "--token", "${CLOUDFLARE_TUNNEL_TOKEN}"]
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - edge
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  private:
+    internal: true
+  edge:
+
+volumes:
+  postgres-data:

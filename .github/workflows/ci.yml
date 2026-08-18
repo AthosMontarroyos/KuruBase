@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      POSTGRES_DB: kurubase
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ci-postgres-password
+      KURUBASE_API_PASSWORD: ci-api-password
+      TEST_DATABASE_URL: postgresql://kurubase_api:ci-api-password@127.0.0.1:5432/kurubase
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck, unit tests, and build
+        run: |
+          npm run check
+          npm run build
+
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+
+      - name: Start PostgreSQL
+        run: docker compose -f compose.yaml -f compose.dev.yaml up -d --wait postgres
+
+      - name: Run PostgreSQL and RLS integration tests
+        run: npm run test:integration
+
+      - name: Show PostgreSQL logs after failure
+        if: failure()
+        run: docker compose -f compose.yaml -f compose.dev.yaml logs postgres
+
+      - name: Stop PostgreSQL
+        if: always()
+        run: docker compose -f compose.yaml -f compose.dev.yaml down --volumes
+
+  secrets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,7 @@
+tunnel: replace-with-tunnel-id
+credentials-file: /run/secrets/cloudflare-tunnel-credentials.json
+
+ingress:
+  - hostname: database.example.com
+    service: http://api:8080
+  - service: http_status:404

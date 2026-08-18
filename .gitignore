@@ -1,0 +1,12 @@
+*:Zone.Identifier
+node_modules/
+dist/
+coverage/
+.env
+.env.local
+.env.production
+.env.*.local
+!.env.example
+.impeccable/
+*.log
+.DS_Store

@@ -1,0 +1,6 @@
+interface:
+  display_name: "KuruBase Security"
+  short_description: "Mandatory database and API security checks"
+  default_prompt: "Use $kurubase-security to review this KuruBase change and enforce its security requirements."
+policy:
+  allow_implicit_invocation: true

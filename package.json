@@ -1,0 +1,41 @@
+{
+  "name": "kurubase",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev": "npm run dev --workspace @kurubase/api",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "vitest run",
+    "test:unit": "vitest run --exclude '**/integration/**'",
+    "test:integration": "vitest run apps/api/test/integration",
+    "check": "npm run typecheck && npm run test:unit",
+    "audit": "npm audit --audit-level=high",
+    "production:env": "node --env-file=.env.production scripts/verify-production-env.mjs",
+    "production:config": "npm run production:env && docker compose --env-file .env.production -f compose.yaml -f compose.production.yaml --profile tunnel config --quiet",
+    "production:start": "npm run production:env && docker compose --env-file .env.production -f compose.yaml -f compose.production.yaml --profile tunnel up -d --build --wait",
+    "production:down": "docker compose --env-file .env.production -f compose.yaml -f compose.production.yaml --profile tunnel down",
+    "production:logs": "docker compose --env-file .env.production -f compose.yaml -f compose.production.yaml --profile tunnel logs -f"
+  },
+  "devDependencies": {
+    "@types/node": "26.2.0",
+    "@types/pg": "8.21.0",
+    "agent-browser": "0.34.0",
+    "tsx": "4.23.12",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "agent-browser@0.34.0": true
+  }
+}
