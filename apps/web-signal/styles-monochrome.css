@@ -1,0 +1,93 @@
+/* Signal Atlas / Monochrome theme: one deliberate theme layer, not a cascade of hotfixes. */
+:root {
+  --canvas: #f1f0ed;
+  --surface: #ffffff;
+  --surface-quiet: #f7f7f5;
+  --surface-accent: #e9e8e4;
+  --ink: #151515;
+  --ink-soft: #3d3d3a;
+  --muted: #6c6b66;
+  --line: #d9d8d3;
+  --line-strong: #aaa9a3;
+  --action: #242422;
+  --action-strong: #000000;
+  --action-soft: #e7e6e2;
+  --ready: #30302d;
+  --ready-soft: #e8e7e3;
+  --attention: #575650;
+  --attention-soft: #eeede9;
+  --data: #66655f;
+  --data-soft: #e5e4e0;
+  --shadow: 0 18px 42px rgba(0, 0, 0, .09), 0 3px 10px rgba(0, 0, 0, .06);
+  --shadow-hover: 0 24px 50px rgba(0, 0, 0, .14), 0 5px 13px rgba(0, 0, 0, .08);
+  --focus: 0 0 0 3px rgba(0, 0, 0, .22);
+}
+
+html[data-theme="dark"] {
+  --canvas: #111110;
+  --surface: #1b1b1a;
+  --surface-quiet: #242422;
+  --surface-accent: #2e2e2b;
+  --ink: #f5f5f1;
+  --ink-soft: #ddddda;
+  --muted: #a3a29b;
+  --line: #3d3c38;
+  --line-strong: #5c5b55;
+  --action: #ededE8;
+  --action-strong: #ffffff;
+  --action-soft: #353531;
+  --ready: #d7d7d1;
+  --ready-soft: #33332f;
+  --attention: #c9c8bf;
+  --attention-soft: #393835;
+  --data: #b9b8af;
+  --data-soft: #373633;
+  --shadow: 0 20px 48px rgba(0, 0, 0, .28), 0 3px 12px rgba(0, 0, 0, .2);
+  --shadow-hover: 0 25px 52px rgba(0, 0, 0, .38), 0 5px 14px rgba(0, 0, 0, .24);
+  --focus: 0 0 0 3px rgba(255, 255, 255, .24);
+}
+
+::selection { background: var(--action); color: var(--surface); }
+.brand__mark { color: var(--surface); background: var(--action-strong); box-shadow: 0 5px 12px rgba(0, 0, 0, .2); }
+.theme-toggle__icon .icon { color: var(--ink); }
+.primary-button { color: var(--surface); background: var(--action); box-shadow: 0 6px 14px rgba(0, 0, 0, .16); }
+
+/* Intrinsic alignment: chips and footer resolve against their available width. */
+.project-card__statuses {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 128px), 1fr));
+  align-items: stretch;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  min-height: 29px;
+  padding: 6px 8px;
+  line-height: 1.15;
+}
+
+.status-chip > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.project-card__footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 16px;
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.open-button { justify-self: end; }
+
+@media (max-width: 760px) {
+  .project-card__footer { grid-template-columns: 1fr; gap: 10px; }
+  .open-button { justify-self: start; }
+}

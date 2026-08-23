@@ -1,0 +1,57 @@
+/* Nanoka reference palette: lavender graphite, derived from the supplied banner's dominant values. */
+:root {
+  --canvas: #f2f0f3;
+  --surface: #fffefe;
+  --surface-quiet: #f8f6f9;
+  --surface-accent: #ece7ef;
+  --ink: #1d1920;
+  --ink-soft: #49404b;
+  --muted: #766c7b;
+  --line: #dad2dd;
+  --line-strong: #b5a9b9;
+  --action: #5d4c63;
+  --action-strong: #33283a;
+  --action-soft: #e7ddeb;
+  --ready: #5b5260;
+  --ready-soft: #eeeaef;
+  --attention: #805d70;
+  --attention-soft: #f1e5eb;
+  --data: #705b78;
+  --data-soft: #e9e0ec;
+  --shadow: 0 18px 42px rgba(43, 27, 48, .1), 0 3px 10px rgba(43, 27, 48, .06);
+  --shadow-hover: 0 24px 50px rgba(43, 27, 48, .16), 0 5px 13px rgba(43, 27, 48, .08);
+  --focus: 0 0 0 3px rgba(93, 76, 99, .28);
+}
+
+html[data-theme="dark"] {
+  --canvas: #151216;
+  --surface: #211a23;
+  --surface-quiet: #2b232e;
+  --surface-accent: #392e3d;
+  --ink: #f8f3f8;
+  --ink-soft: #ddd2e0;
+  --muted: #aaa0ad;
+  --line: #4b3d50;
+  --line-strong: #6a586f;
+  --action: #c1accb;
+  --action-strong: #f0e4f3;
+  --action-soft: #443548;
+  --ready: #c8b7ce;
+  --ready-soft: #403541;
+  --attention: #d4afbf;
+  --attention-soft: #49353f;
+  --data: #c2aaca;
+  --data-soft: #43354b;
+  --shadow: 0 20px 48px rgba(10, 5, 12, .3), 0 3px 12px rgba(10, 5, 12, .22);
+  --shadow-hover: 0 25px 52px rgba(10, 5, 12, .4), 0 5px 14px rgba(10, 5, 12, .28);
+  --focus: 0 0 0 3px rgba(193, 172, 203, .35);
+}
+
+/* Keep the Nanoka hue rare: it marks actions, selection, and data context. */
+.brand__mark { color: var(--surface); background: var(--action-strong); box-shadow: 0 5px 12px rgba(43, 27, 48, .2); }
+.primary-button { color: var(--surface); background: var(--action); box-shadow: 0 6px 14px rgba(43, 27, 48, .2); }
+.theme-toggle__icon .icon { color: var(--attention); }
+.project-card[data-accent="violet"] .project-card__media { background: var(--data-soft); }
+.project-card[data-accent="blue"] .project-card__media { background: var(--action-soft); }
+.project-card[data-accent="violet"] .project-card__media::after { background: var(--data); }
+.project-card[data-accent="violet"] .project-card__accent-dot { background: var(--data); box-shadow: 0 0 0 4px var(--data-soft); }
