@@ -1,6 +1,0 @@
-interface:
-  display_name: "KuruBase Browser QA"
-  short_description: "Responsive browser and workflow verification"
-  default_prompt: "Use $kurubase-browser-qa to verify the running KuruBase interface."
-policy:
-  allow_implicit_invocation: true

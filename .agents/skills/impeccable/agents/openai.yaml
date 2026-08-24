@@ -1,6 +1,0 @@
-interface:
-  display_name: "Impeccable"
-  short_description: "High-craft frontend design and review"
-  default_prompt: "Use $impeccable to design or refine this KuruBase interface."
-policy:
-  allow_implicit_invocation: true
