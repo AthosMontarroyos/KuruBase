@@ -16,7 +16,9 @@ KuruBase is pre-1.0 software. Security fixes target the latest mainline release.
 - KuruBase never owns accounts, passwords, sessions, or token issuance. It accepts identity only through the explicitly configured provider.
 - Production ingress requires a validated Cloudflare Access login or scoped service token; only local development and tests may disable Access.
 - In `cloudflare-access` mode, the origin validates the signed Access application JWT and resolves its external subject through the private authorization map. Unsigned identity headers and unmapped or disabled principals are denied.
+- Requests proxied by the independent KuruConsole use a Cloudflare Linked App Token policy. Access validates the Console application token and issues the API-audience assertion that KuruBase verifies; KuruBase accepts no custom identity-forwarding header.
 - In production `oidc` mode, the Access and OIDC credentials must both validate and resolve to the same canonical principal. KuruBase consumes only public discovery/JWKS material and never receives signing keys.
 - For Access and OIDC, roles and scopes come only from the server-side authorization map; forced RLS remains the final row-access decision. Administrative routes require `kurubase:admin`.
 - `local-jwt` is restricted to development and tests, carries synthetic canonical claims directly, and is rejected in production.
 - Browser bundles contain no database, Cloudflare service-token, KuruAuth signing, or OpenAI credentials.
+- KuruBase contains no frontend assets or web-serving runtime. KuruConsole has separate CI, images, domain, Tunnel, Access application, Terraform state, and deployment credentials.

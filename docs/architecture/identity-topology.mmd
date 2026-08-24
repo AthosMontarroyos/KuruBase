@@ -8,11 +8,18 @@ flowchart LR
     platform["Pinned submodules<br/>Identity contract<br/>Compatibility tests"]:::coordination
   end
 
-  users[Interactive users] --> access[Cloudflare Access]:::mvp
-  services[Server workloads] --> tokens[Access service tokens] --> access
+  users[Interactive users] --> consoleAccess[KuruConsole Access]:::mvp
+  services[Server workloads] --> tokens[Access service tokens] --> access[KuruBase Access]:::mvp
+
+  subgraph kuruconsole["KuruConsole — independent"]
+    consoleTunnel[KuruConsole Tunnel]:::mvp --> console["Web origin<br/>Static UI + /v1 proxy"]:::mvp
+  end
+
+  consoleAccess --> consoleTunnel
+  console -- "Cf-Access-Token<br/>Linked App Token" --> access
 
   subgraph kurubase["KuruBase — MVP"]
-    tunnel[KuruBase Tunnel]:::mvp --> origin["Fastify origin<br/>Dashboard + Data API"]:::mvp
+    tunnel[KuruBase Tunnel]:::mvp --> origin["Fastify origin<br/>Data API only"]:::mvp
     origin --> adapter[Cloudflare Access adapter]:::mvp
     adapter --> map[Private authorization map]:::data
     map --> identity["Canonical RlsIdentity<br/>sub · org_id · roles · scopes"]:::data
@@ -32,6 +39,8 @@ flowchart LR
   access <-. Future generic OIDC IdP .-> endpoints
   platform -. pins .-> kurubase
   platform -. pins .-> kuruauth
+  platform -. pins .-> kuruconsole
 
-  isolation["No shared databases · No shared volumes · No shared secrets · No KuruAuth signing keys in KuruBase"]:::coordination
+  isolation["No shared databases · No shared volumes · No shared secrets · Independent CI, Tunnels, Terraform state, and releases"]:::coordination
+  kuruconsole --- isolation --- kurubase
   kurubase --- isolation --- kuruauth

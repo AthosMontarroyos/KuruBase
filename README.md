@@ -1,11 +1,11 @@
 # KuruBase
 
-KuruBase is an AGPL-3.0 self-hosted PostgreSQL Data API and administrative dashboard for KuruttinaBot and related services. It provides a familiar Supabase-style TypeScript query client while keeping accounts, passwords, sessions, and token issuance outside the product.
+KuruBase is an AGPL-3.0 self-hosted PostgreSQL Data API for KuruttinaBot and related services. It provides a familiar Supabase-style TypeScript query client while keeping accounts, passwords, sessions, token issuance, and browser UI outside the product.
 
 ## MVP
 
 - PostgreSQL with enabled and forced row-level security
-- Fastify REST API and same-origin administrative dashboard
+- Fastify REST Data API
 - Provider-neutral `RlsIdentity { sub, org_id, roles, scopes }`
 - Cloudflare Access JWT validation at the origin
 - Private, auditable external-identity-to-principal authorization map
@@ -37,9 +37,9 @@ The API writes the normalized principal to transaction-local `request.jwt.claims
 2. Install the pinned dependencies with `npm install`.
 3. Start a fresh development PostgreSQL with `docker compose -f compose.yaml -f compose.dev.yaml up -d postgres`.
 4. Run integration tests with `TEST_DATABASE_URL=postgresql://kurubase_api:<password>@127.0.0.1:5432/kurubase npm run test:integration`.
-5. Start the API and dashboard with `npm run dev`, then open `http://127.0.0.1:8080/`.
+5. Start the API with `npm run dev`; its health endpoint is `http://127.0.0.1:8080/health/live`.
 
-The local example uses `local-jwt`; API requests therefore need a correctly signed development Bearer token. The dashboard intentionally does not store or manufacture credentials in browser code, so its complete browser flow should be exercised behind Access or through a local browser QA harness that injects a test identity provider. Set `POSTGRES_PORT` or `API_PORT` when the defaults are already in use.
+The local example uses `local-jwt`; API requests therefore need a correctly signed development Bearer token. Run the independent KuruConsole repository when a browser administration surface is needed. Set `POSTGRES_PORT` or `API_PORT` when the defaults are already in use.
 
 The PostgreSQL entrypoint applies migrations only when initializing a new volume. Before switching identity modes on an existing production deployment, take a backup, enter a maintenance window, validate the new `.env.production`, and recreate only the PostgreSQL container so it receives the new identity-administrator secret while retaining its named data volume:
 
@@ -96,7 +96,7 @@ Only tables in the configured exposed schema are considered. A table is rejected
 
 ## Client
 
-Browser code behind the same Access application omits a Bearer token:
+Browser code should call the independent KuruConsole same-origin proxy rather than the KuruBase hostname directly:
 
 ```ts
 import { createClient } from "@kurubase/client";
@@ -122,20 +122,22 @@ const kurubase = createClient("https://database.example.com", {
 
 OIDC deployments additionally set `accessToken` to a Bearer-token provider. The client deliberately has no `.auth` namespace.
 
+KuruConsole validates its own Access assertion and forwards it through Cloudflare's `Cf-Access-Token` Linked App Token flow. KuruBase does not accept a browser cookie, service secret, or custom unsigned identity header from the Console.
+
 ## Production and Cloudflare
 
 Production uses `.env.production.example`, requires `IDENTITY_PROVIDER=cloudflare-access` or `oidc`, and always requires Cloudflare Access. The validator rejects placeholders, weak or shared database passwords, a local identity provider, non-HTTPS OIDC endpoints, and an origin database outside the private Compose service.
 
-1. Provision the dedicated Access application, policies, Tunnel, and DNS record from `infra/cloudflare/terraform/`.
+1. Provision the dedicated API Access application, policies, Tunnel, and DNS record from `infra/cloudflare/terraform/`. If KuruConsole is deployed, supply its independently produced Access application UID to enable the Linked App Token policy.
 2. Store the sensitive Terraform outputs in the production secret store; do not commit a populated tfvars file or Terraform state.
 3. Configure `.env.production` and run `npm run production:env`.
 4. Run `npm run production:config`, then `npm run production:start`.
 5. Inspect `npm run production:logs`; stop with `npm run production:down`.
 
-PostgreSQL has no production host port. External traffic reaches the dashboard and API only through the Tunnel and deny-by-default Access policy. Infrastructure hibernation is deliberately not enabled by this change; the external wake path and durable PostgreSQL runtime require the separate decision in `docs/adr/0004-aws-hibernation-workstream.md`.
+PostgreSQL has no production host port. External traffic reaches the API only through its Tunnel and deny-by-default Access policy. Infrastructure hibernation is deliberately not enabled by this change; the external wake path and durable PostgreSQL runtime require the separate decision in `docs/adr/0004-aws-hibernation-workstream.md`.
 
 ## Repository architecture
 
-KuruBase and KuruAuth remain independent products. The sibling `KuruPlatform` superproject pins compatible commits and contains the architecture image and black-box identity contract, but it is not a runtime and owns no shared database, volume, secret, Tunnel, or deployment.
+KuruBase, KuruConsole, and KuruAuth remain independent products. KuruBase contains no frontend source or static build. The sibling `KuruPlatform` superproject pins compatible commits and contains architecture images and black-box contracts, but it is not a runtime and owns no shared database, volume, secret, Tunnel, or deployment.
 
 The accepted decisions are in `docs/adr/`, and the machine-readable topology source is `docs/architecture/identity-topology.mmd`. A future KuruAuth integration uses only public OIDC discovery/JWKS over HTTPS; KuruBase never accesses its database or receives a signing key.

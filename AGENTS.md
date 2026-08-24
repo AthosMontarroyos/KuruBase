@@ -5,6 +5,7 @@
 - Write code, documentation, API messages, database identifiers, and UI copy in English.
 - Build a self-hosted PostgreSQL database and Data API inspired by the Supabase database surface.
 - Keep accounts, passwords, sessions, and token issuance outside KuruBase. The MVP validates Cloudflare Access identity; a future independently deployed KuruAuth may connect through the generic OIDC adapter.
+- Keep browser UI in the independently deployed KuruConsole repository. KuruBase serves no frontend assets and shares no build, image, CI, Tunnel, Terraform state, or deployment credential with KuruConsole.
 - Evolve public behavior from concrete KuruttinaBot requirements while preserving backwards compatibility.
 - Keep Auth, Realtime, Storage, and Edge Functions outside the MVP.
 
@@ -25,6 +26,7 @@
 - Treat all client input as untrusted. Validate identifiers against the catalog and parameterize values.
 - Require Cloudflare Access as the deny-by-default production edge login for every externally reachable KuruBase application route. Interactive users authenticate through the configured Access identity provider; non-interactive callers use scoped Access service tokens kept server-side.
 - Validate `Cf-Access-Jwt-Assertion` cryptographically at the origin. In `cloudflare-access` mode it is the MVP authentication credential, while the private authorization map and RLS remain mandatory.
+- Accept proxied KuruConsole user identity only through Cloudflare's Linked App Token flow. Never accept a custom unsigned identity-forwarding header.
 - Make `IDENTITY_PROVIDER` explicit and fail closed. Permit `local-jwt` only in development and tests. In production OIDC mode, require both Access and OIDC identities to resolve to the same canonical principal.
 - Keep KuruAuth independent when introduced: no shared database, volume, secrets, signing keys, CI, Tunnel, or deployment credentials. KuruBase may consume only public OIDC discovery/JWKS over HTTPS.
 - Never expose server credentials or privileged Cloudflare headers to browser code.

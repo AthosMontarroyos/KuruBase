@@ -7,6 +7,7 @@ access_team_name      = "replace-with-team-name"
 allowed_identity_provider_ids = ["replace_with_identity_provider_id"]
 allowed_interactive_emails     = ["operator@example.com"]
 service_token_ids              = ["replace_with_service_token_id"]
+kuruconsole_access_application_uid = "replace_with_kuruconsole_access_application_uid"
 
 session_duration = "8h"
 origin_service   = "http://api:8080"

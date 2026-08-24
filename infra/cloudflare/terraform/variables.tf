@@ -63,6 +63,18 @@ variable "service_token_ids" {
   }
 }
 
+variable "kuruconsole_access_application_uid" {
+  description = "Optional UID of the independently managed KuruConsole Access application allowed to forward user identity with a Linked App Token."
+  type        = string
+  default     = null
+  nullable    = true
+
+  validation {
+    condition     = var.kuruconsole_access_application_uid == null || length(trimspace(var.kuruconsole_access_application_uid)) > 0
+    error_message = "kuruconsole_access_application_uid must be null or a non-empty Access application UID."
+  }
+}
+
 variable "session_duration" {
   description = "Explicit Access application and policy session duration."
   type        = string

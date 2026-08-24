@@ -1,4 +1,3 @@
-import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import type { Pool } from "pg";
 import { buildApp } from "../../src/app.js";
@@ -57,31 +56,17 @@ function provider(identity: RlsIdentity): IdentityProvider {
 }
 
 describe("Fastify application identity", () => {
-  it("serves the dashboard from the API origin with restrictive browser headers", async () => {
-    const originalWorkingDirectory = process.cwd();
-    process.chdir(resolve(originalWorkingDirectory, "apps/api"));
+  it("does not serve browser assets from the API origin", async () => {
     const app = await buildApp({
       config,
       pool: fakePool(),
       dataService: fakeDataService(),
       logger: false,
       identityProvider: provider(baseIdentity)
-    }).finally(() => process.chdir(originalWorkingDirectory));
+    });
 
-    const page = await app.inject({ method: "GET", url: "/" });
-    expect(page.statusCode).toBe(200);
-    expect(page.headers["content-type"]).toContain("text/html");
-    expect(page.headers["content-security-policy"]).toContain("frame-ancestors 'none'");
-    expect(page.headers["x-content-type-options"]).toBe("nosniff");
-    expect(page.body).toContain('<script type="module" src="/bootstrap.js"></script>');
-
-    const script = await app.inject({ method: "GET", url: "/bootstrap.js" });
-    expect(script.statusCode).toBe(200);
-    expect(script.headers["content-type"]).toContain("text/javascript");
-
-    const favicon = await app.inject({ method: "GET", url: "/favicon.ico" });
-    expect(favicon.statusCode).toBe(204);
-    expect(favicon.headers["x-content-type-options"]).toBe("nosniff");
+    expect((await app.inject({ method: "GET", url: "/" })).statusCode).toBe(404);
+    expect((await app.inject({ method: "GET", url: "/bootstrap.js" })).statusCode).toBe(404);
     await app.close();
   });
 

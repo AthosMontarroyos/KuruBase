@@ -11,7 +11,6 @@ import { registerHealthRoutes } from "./routes/health.js";
 import { registerDataRoutes } from "./routes/data.js";
 import { registerAdminRoutes } from "./routes/admin.js";
 import { registerIdentityRoutes } from "./routes/identity.js";
-import { registerDashboardRoutes } from "./routes/dashboard.js";
 
 declare module "fastify" {
   interface FastifyRequest {
@@ -95,7 +94,6 @@ export async function buildApp(dependencies: BuildAppDependencies): Promise<Fast
   });
 
   await registerHealthRoutes(app, pool);
-  await registerDashboardRoutes(app);
 
   await app.register(async (protectedApp) => {
     protectedApp.addHook("onRequest", async (request) => {

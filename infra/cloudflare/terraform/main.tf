@@ -28,6 +28,21 @@ resource "cloudflare_zero_trust_access_policy" "service" {
   ]
 }
 
+resource "cloudflare_zero_trust_access_policy" "kuruconsole" {
+  count = var.kuruconsole_access_application_uid == null ? 0 : 1
+
+  account_id       = var.cloudflare_account_id
+  name             = "KuruConsole linked user identity"
+  decision         = "non_identity"
+  session_duration = var.session_duration
+
+  include = [{
+    linked_app_token = {
+      app_uid = var.kuruconsole_access_application_uid
+    }
+  }]
+}
+
 resource "cloudflare_zero_trust_access_application" "kurubase" {
   account_id                = var.cloudflare_account_id
   name                      = "KuruBase"
@@ -38,16 +53,22 @@ resource "cloudflare_zero_trust_access_application" "kurubase" {
   allowed_idps              = var.allowed_identity_provider_ids
   auto_redirect_to_identity = length(var.allowed_identity_provider_ids) == 1
 
-  policies = [
-    {
-      id         = cloudflare_zero_trust_access_policy.interactive.id
-      precedence = 1
-    },
-    {
-      id         = cloudflare_zero_trust_access_policy.service.id
-      precedence = 2
-    }
-  ]
+  policies = concat(
+    [
+      {
+        id         = cloudflare_zero_trust_access_policy.interactive.id
+        precedence = 1
+      },
+      {
+        id         = cloudflare_zero_trust_access_policy.service.id
+        precedence = 2
+      }
+    ],
+    var.kuruconsole_access_application_uid == null ? [] : [{
+      id         = cloudflare_zero_trust_access_policy.kuruconsole[0].id
+      precedence = 3
+    }]
+  )
 }
 
 resource "cloudflare_zero_trust_tunnel_cloudflared" "kurubase" {

@@ -1,11 +1,12 @@
 # KuruBase Cloudflare infrastructure
 
-This Terraform root owns only the KuruBase Cloudflare boundary: its remotely managed Tunnel, DNS record, Access application, and deny-by-default interactive and service policies. KuruAuth must use a separate Terraform state, Tunnel, hostname, policies, and credentials.
+This Terraform root owns only the KuruBase Cloudflare boundary: its remotely managed Tunnel, DNS record, Access application, and deny-by-default policies. KuruConsole and KuruAuth use separate Terraform states, Tunnels, hostnames, policies, and credentials.
 
 ## Security model
 
 - Interactive identities are allowlisted by exact email at the Access edge. KuruBase does not use email as an application principal; the signed Access `sub` is resolved through the private authorization map.
 - Server workloads use existing scoped Access service tokens. Their client secrets must be stored in the calling workload's secret store and never in this repository or a browser bundle.
+- KuruConsole user requests use Cloudflare's Linked App Token flow. Supply the non-secret KuruConsole Access application UID through `kuruconsole_access_application_uid`; KuruConsole forwards its validated assertion as `Cf-Access-Token`, and Access emits a KuruBase-audience assertion for the same user.
 - `cloudflared` validates the application audience before proxying. The Fastify origin validates `Cf-Access-Jwt-Assertion` again and performs local authorization and PostgreSQL RLS.
 - The Terraform state contains sensitive tunnel material. Use an encrypted, access-controlled remote backend and never commit local state.
 
@@ -19,3 +20,5 @@ This Terraform root owns only the KuruBase Cloudflare boundary: its remotely man
 6. Apply only through the KuruBase infrastructure workflow, then store the sensitive `tunnel_token` output in the KuruBase production secret store.
 
 Service-token creation and rotation are deliberately separate from this root so their client secrets do not become outputs consumed by browser-facing or coordination repositories.
+
+The KuruConsole UID is an explicit cross-repository deployment input, not shared Terraform state. Apply KuruConsole first, review its `access_application_uid` output, then apply this root. Do not replace this relationship with a browser-visible service token or an unsigned user header.
