@@ -60,6 +60,41 @@ describe("supabase.ts client", () => {
     expect("auth" in client).toBe(false);
   });
 
+  it("omits bearer authorization for same-origin Access sessions", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({ data: [], error: null, count: 0, status: 200 }),
+        { status: 200, headers: { "content-type": "application/json" } }
+      )
+    );
+    const client = createClient("https://database.test", { fetch: fetchMock });
+
+    await client.from<RecordRow>("records").select();
+
+    const [, init] = fetchMock.mock.calls[0] ?? [];
+    const headers = new Headers(init?.headers);
+    expect(headers.has("authorization")).toBe(false);
+    expect(headers.get("accept")).toBe("application/json");
+  });
+
+  it("preserves explicitly configured server-side request headers", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({ data: [], error: null, count: 0, status: 200 }),
+        { status: 200, headers: { "content-type": "application/json" } }
+      )
+    );
+    const client = createClient("https://database.test", {
+      headers: { "cf-access-client-id": "server-side-id" },
+      fetch: fetchMock
+    });
+
+    await client.from<RecordRow>("records").select();
+
+    const [, init] = fetchMock.mock.calls[0] ?? [];
+    expect(new Headers(init?.headers).get("cf-access-client-id")).toBe("server-side-id");
+  });
+
   it("returns a stable envelope for network failures", async () => {
     const client = createClient("https://database.test", {
       accessToken: "token",

@@ -1,9 +1,6 @@
 import { Pool } from "pg";
 import { loadConfig } from "./config.js";
-import {
-  createCloudflareAccessVerifier,
-  createKuruAuthVerifier
-} from "./auth.js";
+import { createIdentityProvider, PostgresPrincipalResolver } from "./auth.js";
 import { buildApp } from "./app.js";
 
 const config = loadConfig();
@@ -15,17 +12,13 @@ const pool = new Pool({
   application_name: "kurubase-api"
 });
 
-const kuruAuthVerifier = createKuruAuthVerifier(config);
-const cloudflareVerifier =
-  config.cloudflareAccessRequired && config.cloudflareTeamDomain && config.cloudflareAudience
-    ? createCloudflareAccessVerifier(config.cloudflareTeamDomain, config.cloudflareAudience)
-    : undefined;
+const principalResolver = new PostgresPrincipalResolver(pool);
+const identityProvider = createIdentityProvider(config.identity, principalResolver);
 
 const app = await buildApp({
   config,
   pool,
-  kuruAuthVerifier,
-  ...(cloudflareVerifier ? { cloudflareVerifier } : {})
+  identityProvider
 });
 
 const close = async (signal: string): Promise<void> => {

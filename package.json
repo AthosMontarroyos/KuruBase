@@ -20,6 +20,7 @@
     "test:integration": "vitest run apps/api/test/integration",
     "check": "npm run typecheck && npm run test:unit",
     "audit": "npm audit --audit-level=high",
+    "identity:admin": "node scripts/identity-admin.mjs",
     "production:env": "node --env-file=.env.production scripts/verify-production-env.mjs",
     "production:config": "npm run production:env && docker compose --env-file .env.production -f compose.yaml -f compose.production.yaml --profile tunnel config --quiet",
     "production:start": "npm run production:env && docker compose --env-file .env.production -f compose.yaml -f compose.production.yaml --profile tunnel up -d --build --wait",

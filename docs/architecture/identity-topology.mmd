@@ -1,0 +1,37 @@
+flowchart LR
+  classDef mvp fill:#ece7ef,stroke:#5d4c63,color:#1d1920
+  classDef future fill:#f1e5eb,stroke:#805d70,color:#1d1920,stroke-dasharray:5 4
+  classDef data fill:#e9e0ec,stroke:#705b78,color:#1d1920
+  classDef coordination fill:#f8f6f9,stroke:#766c7b,color:#1d1920,stroke-dasharray:2 3
+
+  subgraph coordination["KuruPlatform — coordination only"]
+    platform["Pinned submodules<br/>Identity contract<br/>Compatibility tests"]:::coordination
+  end
+
+  users[Interactive users] --> access[Cloudflare Access]:::mvp
+  services[Server workloads] --> tokens[Access service tokens] --> access
+
+  subgraph kurubase["KuruBase — MVP"]
+    tunnel[KuruBase Tunnel]:::mvp --> origin["Fastify origin<br/>Dashboard + Data API"]:::mvp
+    origin --> adapter[Cloudflare Access adapter]:::mvp
+    adapter --> map[Private authorization map]:::data
+    map --> identity["Canonical RlsIdentity<br/>sub · org_id · roles · scopes"]:::data
+    identity --> claims[request.jwt.claims] --> rls[Forced RLS]:::data --> db[(KuruBase PostgreSQL)]:::data
+    oidc[OIDC adapter — future]:::future
+  end
+
+  access --> tunnel
+
+  subgraph kuruauth["KuruAuth — future, independent"]
+    endpoints["Public OIDC endpoints<br/>login · authorize · token · discovery · JWKS"]:::future
+    authTunnel[KuruAuth Tunnel]:::future --> authService[KuruAuth service]:::future --> authDb[(KuruAuth PostgreSQL)]:::future
+    endpoints --> authTunnel
+  end
+
+  oidc -. HTTPS discovery / JWKS .-> endpoints
+  access <-. Future generic OIDC IdP .-> endpoints
+  platform -. pins .-> kurubase
+  platform -. pins .-> kuruauth
+
+  isolation["No shared databases · No shared volumes · No shared secrets · No KuruAuth signing keys in KuruBase"]:::coordination
+  kurubase --- isolation --- kuruauth

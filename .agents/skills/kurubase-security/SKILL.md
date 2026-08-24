@@ -29,4 +29,4 @@ Treat security as a release requirement. Reject a change when its authorization 
 - Keep migrations reviewable and non-destructive by default. Require an explicit data migration and rollback strategy for destructive work.
 - Pin dependency versions, commit lockfiles, and run secret and dependency scans.
 
-KuruAuth owns authentication. KuruBase validates KuruAuth tokens and performs authorization; it does not implement accounts, passwords, sessions, or token issuance.
+KuruBase does not implement accounts, passwords, sessions, or token issuance. It authenticates through the explicit provider mode, resolves external subjects to canonical local principals, and performs authorization through the private map plus forced RLS. Cloudflare Access is the MVP provider; KuruAuth may be added later only through the generic OIDC boundary.

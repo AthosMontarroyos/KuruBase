@@ -9,10 +9,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       KURUBASE_API_PASSWORD: ${KURUBASE_API_PASSWORD}
+      KURUBASE_IDENTITY_ADMIN_PASSWORD: ${KURUBASE_IDENTITY_ADMIN_PASSWORD:?KURUBASE_IDENTITY_ADMIN_PASSWORD is required}
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./infra/postgres/migrations/0001_foundation.sql:/docker-entrypoint-initdb.d/001_foundation.sql:ro
-      - ./infra/postgres/init/002_runtime_role.sql:/docker-entrypoint-initdb.d/002_runtime_role.sql:ro
+      - ./infra/postgres/migrations/0002_identity_authorization.sql:/docker-entrypoint-initdb.d/002_identity.sql:ro
+      - ./infra/postgres/init/002_runtime_role.sql:/docker-entrypoint-initdb.d/003_runtime_role.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
@@ -28,9 +30,31 @@ services:
       context: .
       dockerfile: apps/api/Dockerfile
     restart: unless-stopped
-    env_file:
-      - path: .env
-        required: false
+    environment:
+      NODE_ENV: "${NODE_ENV:-development}"
+      HOST: "${HOST:-0.0.0.0}"
+      PORT: "${PORT:-8080}"
+      DATABASE_URL: "${DATABASE_URL:?DATABASE_URL is required}"
+      DB_POOL_MAX: "${DB_POOL_MAX:-10}"
+      DB_STATEMENT_TIMEOUT_MS: "${DB_STATEMENT_TIMEOUT_MS:-5000}"
+      EXPOSED_SCHEMA: "${EXPOSED_SCHEMA:-api}"
+      IDENTITY_PROVIDER: "${IDENTITY_PROVIDER:?IDENTITY_PROVIDER is required}"
+      OIDC_ISSUER: "${OIDC_ISSUER:-}"
+      OIDC_AUDIENCE: "${OIDC_AUDIENCE:-}"
+      OIDC_JWKS_URL: "${OIDC_JWKS_URL:-}"
+      OIDC_ALLOWED_ALGORITHMS: "${OIDC_ALLOWED_ALGORITHMS:-}"
+      KURUAUTH_ISSUER: "${KURUAUTH_ISSUER:-}"
+      KURUAUTH_AUDIENCE: "${KURUAUTH_AUDIENCE:-}"
+      KURUAUTH_JWKS_URL: "${KURUAUTH_JWKS_URL:-}"
+      KURUAUTH_ALLOWED_ALGORITHMS: "${KURUAUTH_ALLOWED_ALGORITHMS:-}"
+      CLOUDFLARE_ACCESS_REQUIRED: "${CLOUDFLARE_ACCESS_REQUIRED:-}"
+      CLOUDFLARE_ACCESS_TEAM_DOMAIN: "${CLOUDFLARE_ACCESS_TEAM_DOMAIN:-}"
+      CLOUDFLARE_ACCESS_AUDIENCE: "${CLOUDFLARE_ACCESS_AUDIENCE:-}"
+      LOCAL_JWT_ISSUER: "${LOCAL_JWT_ISSUER:-}"
+      LOCAL_JWT_AUDIENCE: "${LOCAL_JWT_AUDIENCE:-}"
+      LOCAL_JWT_SECRET: "${LOCAL_JWT_SECRET:-}"
+      RATE_LIMIT_MAX: "${RATE_LIMIT_MAX:-120}"
+      RATE_LIMIT_WINDOW: "${RATE_LIMIT_WINDOW:-1 minute}"
     depends_on:
       postgres:
         condition: service_healthy

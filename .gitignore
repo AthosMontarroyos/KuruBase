@@ -8,5 +8,16 @@ coverage/
 .env.*.local
 !.env.example
 .impeccable/
+.terraform/
+*.tfvars
+!*.tfvars.example
+*.tfplan
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
 *.log
 .DS_Store

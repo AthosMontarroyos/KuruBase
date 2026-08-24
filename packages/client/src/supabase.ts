@@ -14,7 +14,17 @@ export interface KuruBaseResponse<T> {
 export type AccessTokenProvider = string | (() => string | Promise<string>);
 
 export interface KuruBaseClientOptions {
-  accessToken: AccessTokenProvider;
+  /**
+   * Optional bearer token used by OIDC and local JWT deployments.
+   * Browser clients behind Cloudflare Access should omit it and rely on the
+   * same-origin Access session instead.
+   */
+  accessToken?: AccessTokenProvider;
+  /**
+   * Additional request headers. Cloudflare Access service-token credentials
+   * may only be supplied from a trusted server runtime; never include them in
+   * browser bundles or other client-side code.
+   */
   headers?: HeadersInit;
   fetch?: typeof globalThis.fetch;
 }
@@ -203,7 +213,7 @@ export class KuruBaseClient {
 
   constructor(
     baseUrl: string,
-    private readonly options: KuruBaseClientOptions
+    private readonly options: KuruBaseClientOptions = {}
   ) {
     this.baseUrl = baseUrl.replace(/\/+$/, "");
     this.fetchImplementation = options.fetch ?? globalThis.fetch;
@@ -233,7 +243,9 @@ export class KuruBaseClient {
           ? await this.options.accessToken()
           : this.options.accessToken;
       const headers = new Headers(this.options.headers);
-      headers.set("authorization", `Bearer ${token}`);
+      if (token) {
+        headers.set("authorization", `Bearer ${token}`);
+      }
       headers.set("accept", "application/json");
       const init: RequestInit = { method, headers };
       if (body !== null && method !== "GET" && method !== "DELETE") {
@@ -262,7 +274,7 @@ export class KuruBaseClient {
 
 export function createClient(
   baseUrl: string,
-  options: KuruBaseClientOptions
+  options: KuruBaseClientOptions = {}
 ): KuruBaseClient {
   return new KuruBaseClient(baseUrl, options);
 }

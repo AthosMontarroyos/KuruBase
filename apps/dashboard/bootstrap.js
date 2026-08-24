@@ -7,12 +7,14 @@ import('./app.js').catch((error) => {
 
   app.innerHTML = `
     <main class="main-content">
-      <section class="page-heading" role="alert">
-        <div>
-          <h1>Dashboard unavailable</h1>
-          <p>The interface could not start. Refresh the page to try again.</p>
-        </div>
+      <section class="page-heading">
+        <div><h1>Dashboard unavailable</h1><p>The interface could not start.</p></div>
+      </section>
+      <section class="state-panel state-panel--error state-panel--bootstrap" role="alert">
+        <div><h2>Interface failed to load</h2><p>Refresh the page to load the dashboard again.</p></div>
+        <button class="primary-button" type="button" data-bootstrap-retry>Refresh page</button>
       </section>
     </main>
   `;
+  app.querySelector('[data-bootstrap-retry]')?.addEventListener('click', () => window.location.reload());
 });

@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import type { DataService } from "../db/data-service.js";
+import { requireScope } from "../authorization.js";
 
 const tableParamsSchema = z.object({
   table: z.string().regex(/^[a-z_][a-z0-9_]*$/)
@@ -16,6 +17,7 @@ export async function registerDataRoutes(
   dataService: DataService
 ): Promise<void> {
   app.get("/v1/data/:table", async (request, reply) => {
+    requireScope(request.auth, "kurubase:data:read");
     const { table } = tableParamsSchema.parse(request.params);
     const result = await dataService.select({
       table,
@@ -26,6 +28,7 @@ export async function registerDataRoutes(
   });
 
   app.post("/v1/data/:table", async (request, reply) => {
+    requireScope(request.auth, "kurubase:data:write");
     const { table } = tableParamsSchema.parse(request.params);
     const rows = insertSchema.parse(request.body);
     const result = await dataService.insert(
@@ -36,6 +39,7 @@ export async function registerDataRoutes(
   });
 
   app.patch("/v1/data/:table", async (request, reply) => {
+    requireScope(request.auth, "kurubase:data:write");
     const { table } = tableParamsSchema.parse(request.params);
     const changes = mutationRecordSchema.parse(request.body);
     const result = await dataService.update(
@@ -46,6 +50,7 @@ export async function registerDataRoutes(
   });
 
   app.delete("/v1/data/:table", async (request, reply) => {
+    requireScope(request.auth, "kurubase:data:write");
     const { table } = tableParamsSchema.parse(request.params);
     const result = await dataService.delete({
       table,

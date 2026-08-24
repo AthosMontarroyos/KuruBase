@@ -1,29 +1,28 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import rateLimit from "@fastify/rate-limit";
 import { z } from "zod";
-import type { JWTPayload } from "jose";
 import type { Pool } from "pg";
 import type { AppConfig } from "./config.js";
-import type { AccessTokenVerifier, AuthClaims, DataEnvelope } from "./types.js";
+import type { DataEnvelope, IdentityProvider, RlsIdentity } from "./types.js";
 import type { DataService } from "./db/data-service.js";
 import { PostgresDataService } from "./db/data-service.js";
-import { AppError, unauthorized } from "./errors.js";
-import { readBearerToken } from "./auth.js";
+import { AppError } from "./errors.js";
 import { registerHealthRoutes } from "./routes/health.js";
 import { registerDataRoutes } from "./routes/data.js";
 import { registerAdminRoutes } from "./routes/admin.js";
+import { registerIdentityRoutes } from "./routes/identity.js";
+import { registerDashboardRoutes } from "./routes/dashboard.js";
 
 declare module "fastify" {
   interface FastifyRequest {
-    auth: AuthClaims;
+    auth: RlsIdentity;
   }
 }
 
 export interface BuildAppDependencies {
   config: AppConfig;
   pool: Pool;
-  kuruAuthVerifier: AccessTokenVerifier<AuthClaims>;
-  cloudflareVerifier?: AccessTokenVerifier<JWTPayload>;
+  identityProvider: IdentityProvider;
   dataService?: DataService;
   logger?: boolean;
 }
@@ -40,8 +39,9 @@ function errorEnvelope(
 
 export async function buildApp(dependencies: BuildAppDependencies): Promise<FastifyInstance> {
   const { config, pool } = dependencies;
-  if (config.cloudflareAccessRequired && !dependencies.cloudflareVerifier) {
-    throw new Error("Cloudflare Access verification is required but no verifier was configured");
+  const { identityProvider } = dependencies;
+  if (!identityProvider) {
+    throw new Error("An identity provider must be configured");
   }
 
   const app = Fastify({
@@ -95,21 +95,17 @@ export async function buildApp(dependencies: BuildAppDependencies): Promise<Fast
   });
 
   await registerHealthRoutes(app, pool);
+  await registerDashboardRoutes(app);
 
   await app.register(async (protectedApp) => {
     protectedApp.addHook("onRequest", async (request) => {
-      if (config.cloudflareAccessRequired) {
-        const header = request.headers["cf-access-jwt-assertion"];
-        if (typeof header !== "string") throw unauthorized("Cloudflare Access authentication is required");
-        await dependencies.cloudflareVerifier?.verify(header);
-      }
-      const token = readBearerToken(request.headers.authorization);
-      request.auth = await dependencies.kuruAuthVerifier.verify(token);
+      request.auth = await identityProvider.authenticate(request);
     });
 
     const dataService =
       dependencies.dataService ??
       new PostgresDataService(pool, config.exposedSchema, config.statementTimeoutMs);
+    await registerIdentityRoutes(protectedApp);
     await registerDataRoutes(protectedApp, dataService);
     await registerAdminRoutes(protectedApp);
   });

@@ -1,0 +1,12 @@
+cloudflare_account_id = "replace_with_account_id"
+cloudflare_zone_id    = "replace_with_zone_id"
+hostname              = "database.example.com"
+dns_record_name       = "database"
+access_team_name      = "replace-with-team-name"
+
+allowed_identity_provider_ids = ["replace_with_identity_provider_id"]
+allowed_interactive_emails     = ["operator@example.com"]
+service_token_ids              = ["replace_with_service_token_id"]
+
+session_duration = "8h"
+origin_service   = "http://api:8080"

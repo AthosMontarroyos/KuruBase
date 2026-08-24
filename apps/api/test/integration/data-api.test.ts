@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Pool } from "pg";
 import { buildApp } from "../../src/app.js";
 import type { AppConfig } from "../../src/config.js";
-import type { AuthClaims } from "../../src/types.js";
+import type { RlsIdentity } from "../../src/types.js";
 
 const databaseUrl = process.env.TEST_DATABASE_URL;
 const integration = databaseUrl ? describe : describe.skip;
@@ -20,19 +20,23 @@ const config: AppConfig = {
   dbPoolMax: 2,
   statementTimeoutMs: 5000,
   exposedSchema: "api",
-  kuruAuthIssuer: "https://auth.test",
-  kuruAuthAudience: "kurubase",
-  kuruAuthJwksUrl: "https://auth.test/jwks",
-  kuruAuthAlgorithms: ["RS256"],
-  cloudflareAccessRequired: false,
-  cloudflareTeamDomain: null,
-  cloudflareAudience: null,
+  identity: {
+    mode: "local-jwt",
+    issuer: "urn:kurubase:test",
+    audience: "kurubase",
+    secret: "x".repeat(32)
+  },
   rateLimitMax: 1000,
   rateLimitWindow: "1 minute"
 };
 
-function claims(sub: string): AuthClaims {
-  return { sub, org_id: null, roles: [], scopes: [] };
+function claims(sub: string): RlsIdentity {
+  return {
+    sub,
+    org_id: null,
+    roles: ["member"],
+    scopes: ["kurubase:data:read", "kurubase:data:write"]
+  };
 }
 
 integration("PostgreSQL Data API and forced RLS", () => {
@@ -42,8 +46,9 @@ integration("PostgreSQL Data API and forced RLS", () => {
       config,
       pool,
       logger: false,
-      kuruAuthVerifier: {
-        verify: async (token) => claims(token === "user-b" ? ownerB : ownerA)
+      identityProvider: {
+        authenticate: async (request) =>
+          claims(request.headers.authorization === "Bearer user-b" ? ownerB : ownerA)
       }
     });
   });

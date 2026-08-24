@@ -1,11 +1,9 @@
 import type { FastifyInstance } from "fastify";
-import { forbidden } from "../errors.js";
+import { requireScope } from "../authorization.js";
 
 export async function registerAdminRoutes(app: FastifyInstance): Promise<void> {
   app.get("/v1/admin/status", async (request) => {
-    if (!request.auth.scopes.includes("kurubase:admin")) {
-      throw forbidden("The kurubase:admin scope is required");
-    }
+    requireScope(request.auth, "kurubase:admin");
     return {
       data: {
         status: "ok",
